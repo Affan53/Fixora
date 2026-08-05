@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Fixora</string>
+    <string name="title_activity_main">Fixora</string>
+    <string name="package_name">com.fixora.customer</string>
+    <string name="custom_url_scheme">com.fixora.customer</string>
+</resources>

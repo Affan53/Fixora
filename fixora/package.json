@@ -1,0 +1,46 @@
+{
+  "name": "fixora-frontend",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "build:customer": "vite build --mode customer --outDir dist-customer",
+    "build:worker": "vite build --mode worker --outDir dist-worker",
+    "android:customer:sync": "copy capacitor.customer.config.json capacitor.config.json && npm run build:customer && npx cap sync android-customer",
+    "android:worker:sync": "copy capacitor.worker.config.json capacitor.config.json && npm run build:worker && npx cap sync android-worker",
+    "android:customer:build": "cd android-customer && gradlew.bat assembleDebug",
+    "android:worker:build": "cd android-worker && gradlew.bat assembleDebug",
+    "android:customer:install": "adb install -r android-customer/app/build/outputs/apk/debug/app-debug.apk",
+    "android:worker:install": "adb install -r android-worker/app/build/outputs/apk/debug/app-debug.apk",
+    "android:devices": "adb devices"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.4.2",
+    "@capacitor/cli": "^8.4.2",
+    "@capacitor/core": "^8.4.2",
+    "@capacitor/geolocation": "^8.2.0",
+    "@capacitor/ios": "^8.4.2",
+    "@capacitor/push-notifications": "^8.1.2",
+    "@stomp/stompjs": "^7.0.0",
+    "axios": "^1.7.4",
+    "framer-motion": "^11.3.0",
+    "leaflet": "^1.9.4",
+    "lucide-react": "^0.383.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-hook-form": "^7.52.0",
+    "react-leaflet": "^4.2.1",
+    "react-router-dom": "^6.26.0",
+    "sockjs-client": "^1.6.1"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.1",
+    "autoprefixer": "^10.4.19",
+    "postcss": "^8.4.40",
+    "tailwindcss": "^3.4.7",
+    "vite": "^5.3.4"
+  }
+}

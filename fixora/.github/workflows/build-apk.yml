@@ -1,0 +1,104 @@
+name: Build Fixora Android APKs
+
+# Runs automatically whenever you push to main, and can also be triggered
+# manually from the GitHub Actions tab ("Run workflow" button). Builds real,
+# signed, installable APKs from the existing android-customer and
+# android-worker native projects already committed in this repo.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        app: [customer, worker]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install frontend dependencies
+        working-directory: fixora
+        run: npm install
+
+      - name: Decode signing keystore
+        working-directory: fixora
+        run: echo "${{ secrets.FIXORA_KEYSTORE_BASE64 }}" | base64 -d > release.keystore
+
+      - name: Build web bundle (${{ matrix.app }})
+        working-directory: fixora
+        run: |
+          cp capacitor.${{ matrix.app }}.config.json capacitor.config.json
+          npm run build:${{ matrix.app }}
+
+      - name: Sync web build into existing android-${{ matrix.app }} project
+        working-directory: fixora
+        run: npx cap sync android-${{ matrix.app }}
+
+      - name: Build signed release APK
+        working-directory: fixora/android-${{ matrix.app }}
+        run: |
+          chmod +x ./gradlew
+          ./gradlew assembleRelease \
+            -Pandroid.injected.signing.store.file=../release.keystore \
+            -Pandroid.injected.signing.store.password=${{ secrets.FIXORA_KEYSTORE_PASSWORD }} \
+            -Pandroid.injected.signing.key.alias=fixora-${{ matrix.app }} \
+            -Pandroid.injected.signing.key.password=${{ secrets.FIXORA_KEYSTORE_PASSWORD }}
+
+      - name: Copy APK to downloads folder
+        working-directory: fixora
+        run: |
+          mkdir -p public/downloads
+          cp android-${{ matrix.app }}/app/build/outputs/apk/release/app-release.apk public/downloads/fixora-${{ matrix.app }}.apk
+
+      - name: Upload as workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: fixora-${{ matrix.app }}-apk
+          path: fixora/public/downloads/fixora-${{ matrix.app }}.apk
+
+      - name: Stash built APK for commit job
+        uses: actions/upload-artifact@v4
+        with:
+          name: apk-for-commit-${{ matrix.app }}
+          path: fixora/public/downloads/fixora-${{ matrix.app }}.apk
+          retention-days: 1
+
+  commit-apks:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download customer APK
+        uses: actions/download-artifact@v4
+        with:
+          name: apk-for-commit-customer
+          path: fixora/public/downloads
+
+      - name: Download worker APK
+        uses: actions/download-artifact@v4
+        with:
+          name: apk-for-commit-worker
+          path: fixora/public/downloads
+
+      - name: Commit APKs to the repo
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "Auto-build: updated app downloads"
+          file_pattern: "fixora/public/downloads/*.apk"

@@ -1,0 +1,8 @@
+{
+  "appId": "com.fixora.partner",
+  "appName": "Fixora Partner",
+  "webDir": "dist-worker",
+  "server": {
+    "androidScheme": "https"
+  }
+}

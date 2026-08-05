@@ -1,0 +1,8 @@
+{
+  "appId": "com.fixora.customer",
+  "appName": "Fixora",
+  "webDir": "dist-customer",
+  "server": {
+    "androidScheme": "https"
+  }
+}
